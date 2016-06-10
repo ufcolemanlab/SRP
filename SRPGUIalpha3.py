@@ -239,6 +239,27 @@ class GraphPage(tk.Frame):
         self.t3Entry.grid(row = 2, column = 7)
         self.t3Entry.insert(0, 100)
         
+        minLabel = tk.Label(f1, text = "Min: ")
+        minLabel.grid(row = 4, column = 0)
+        
+        self.minVar = tk.StringVar()
+        minDisplay = tk.Label(f1, textvariable = self.minVar)
+        minDisplay.grid(row = 4, column = 1)
+        
+        maxLabel = tk.Label(f1, text = "Max: ")
+        maxLabel.grid(row = 4, column = 2)
+
+        self.maxVar = tk.StringVar()        
+        maxDisplay = tk.Label(f1, textvariable = self.maxVar)
+        maxDisplay.grid(row = 4, column = 3)
+        
+        ampLabel = tk.Label(f1, text = "Amplitude: ")
+        ampLabel.grid(row = 4, column = 4)
+
+        self.ampVar = tk.StringVar()        
+        ampDisplay = tk.Label(f1, textvariable = self.ampVar)
+        ampDisplay.grid(row = 4, column = 5)
+        
         self.graphBehavior = 'all'
         
         #temp data
@@ -250,7 +271,7 @@ class GraphPage(tk.Frame):
         self.offsetWaveforms.grid(row = 3, column = 0)
         
         self.stimTypeVar = tk.IntVar()
-        self.stimTypeVar.set(1)
+        self.stimTypeVar.set(3)
         self.R1 = tk.Radiobutton(f1, text = "Flips", variable = self.stimTypeVar, value = 1, command = self.on_stim_select)
         self.R2 = tk.Radiobutton(f1, text = "Flops", variable = self.stimTypeVar, value = 2, command = self.on_stim_select)
         self.R3 = tk.Radiobutton(f1, text = "Average", variable = self.stimTypeVar, value = 3, command = self.on_stim_select)
@@ -309,6 +330,11 @@ class GraphPage(tk.Frame):
         a.clear()
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
+        if (len(selection) == 0):
+            self.processedList.selection_set(0,tk.END)
+            selection = self.processedList.curselection()
+            selection = [self.processedList.get(item) for item in selection]
+            
         for key in flipAverages:
             if key in selection:
                 if self.stimTypeVar.get() == 1:    
@@ -346,15 +372,16 @@ class GraphPage(tk.Frame):
         t3 = self.getT3Entry()
         
         min_x = array[t2:t3].argmin()
-        print min_x
         min_y = array[t2:t3][min_x]
-        print min_y
         max_x = array[min_x + t2:t3].argmax()
-        print max_x
         max_y = array[min_x + t2:t3][max_x]
-        print max_y
-        a.plot(min_x + t2, min_y, marker = '+', color = 'red')
-        a.plot(max_x + min_x + t2, max_y, marker = '+', color = 'red')
+        a.plot(min_x + t2, min_y, marker = '+', color = 'red', markersize = 10, markeredgewidth = 2)
+        a.plot(max_x + min_x + t2, max_y, marker = '+', color = 'red', markersize = 10, markeredgewidth = 2)
+        
+        self.minVar.set(str(min_x + t2) + " , " +str(min_y))
+        self.maxVar.set(str(max_x + min_x + t2) + " , " + str(max_y))
+        self.ampVar.set(str(max_y-min_y))
+        
     #selects an graphs sessions associated with the slected file name     
     def on_file_select(self, evt):
         a.clear()
