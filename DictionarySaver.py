@@ -31,4 +31,4 @@ if __name__ == "__main__":
     Y=5
     A = {"X": X, "Y": Y}
     x = DictionarySaver()
-    x.saveDictionary(A)
+    x.saveDictionary(A,"test")

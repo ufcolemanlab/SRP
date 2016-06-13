@@ -15,7 +15,7 @@ import SRPdecoder as SRP
 import numpy as np
 import os
 
-#import DictionarySaver as ds
+import DictionarySaver as ds
 
 import matplotlib
 matplotlib.use("TkAgg")
@@ -25,6 +25,7 @@ from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
 import matplotlib.pyplot as plt
+from scipy.io import matlab
 
 
 #global figures
@@ -37,6 +38,7 @@ datafile.setDataType('<d')
 data = {}
 flipAverages = {}
 flopAverages = {}
+amplitudes = {}
 
 f = Figure(figsize = (6,3), dpi = 100)
 a = f.add_subplot(111)
@@ -211,6 +213,11 @@ class GraphPage(tk.Frame):
                              
         button6.grid(row = 1, column = 5)
         
+        button7 = ttk.Button(f1, text = "Save",
+                     command = lambda: self.save())
+                             
+        button7.grid(row = 1, column = 6)
+        
         stimlabel = tk.Label(f1, text="Stim Length")
         stimlabel.grid(row = 2, column = 0)
         
@@ -300,34 +307,36 @@ class GraphPage(tk.Frame):
     #graphs data from all processed files
     def graph_all(self):
         a.clear()
+        amplitudes.clear()
         self.graphBehavior = 'all'
         for key in flipAverages:
             for i in range(len(flipAverages[key])):
                 if self.offsetVar.get() == 1:
                     if self.stimTypeVar.get() == 1:
                         a.plot(flipAverages[key][i]-np.average(flipAverages[key][i]))
-                        self.get_minmax(flipAverages[key][i]-np.average(flipAverages[key][i]))
+                        self.get_minmax(key.replace(".bin","_") + str(i), flipAverages[key][i]-np.average(flipAverages[key][i]))
                     elif self.stimTypeVar.get() ==2:
                         a.plot(flopAverages[key][i]-np.average(flopAverages[key][i]))
-                        self.get_minmax(flopAverages[key][i]-np.average(flopAverages[key][i]))
+                        self.get_minmax(key.replace(".bin","_") + str(i), flopAverages[key][i]-np.average(flopAverages[key][i]))
                     elif self.stimTypeVar.get() == 3:
                         avg = np.mean(np.array([flipAverages[key][i],flopAverages[key][i]]), axis = 0)
                         a.plot(avg-np.average(avg))
-                        self.get_minmax(avg-np.average(avg))
+                        self.get_minmax(key.replace(".bin","_") + str(i), avg-np.average(avg))
                 elif self.offsetVar.get() == 0:
                     if self.stimTypeVar.get() == 1:    
                         a.plot(flipAverages[key][i])
-                        self.get_minmax(flipAverages[key][i])
+                        self.get_minmax(key.replace(".bin","_") + str(i), flipAverages[key][i])
                     elif self.stimTypeVar.get() == 2:
                         a.plot(flopAverages[key][i])
-                        self.get_minmax(flopAverages[key][i])
+                        self.get_minmax(key.replace(".bin","_") + str(i), flopAverages[key][i])
                     elif self.stimTypeVar.get() == 3:
                         avg = np.mean(np.array([flipAverages[key][i],flopAverages[key][i]]), axis = 0)
                         a.plot(avg)
-                        self.get_minmax(avg)
+                        self.get_minmax(key.replace(".bin","_") + str(i), avg)
                         
     def graph_total(self):
         a.clear()
+        amplitudes.clear()
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
         if (len(selection) == 0):
@@ -343,14 +352,14 @@ class GraphPage(tk.Frame):
                         avgs += flipAverages[key][i]
                     avgs /= len(flipAverages[key])
                     a.plot(avgs)
-                    self.get_minmax(avgs)
+                    self.get_minmax(key.replace(".bin","_") + "total", avgs)
                 elif self.stimTypeVar.get() ==2:
                     avgs = np.zeros(len(flipAverages[key][0]))
                     for i in range(len(flipAverages[key])):
                         avgs += flopAverages[key][i]
                     avgs /= len(flipAverages[key])
                     a.plot(avgs)
-                    self.get_minmax(avgs)
+                    self.get_minmax(key.replace(".bin","_") + "total", avgs)
                 elif self.stimTypeVar.get() == 3:
                     avgs = np.zeros(len(flipAverages[key][0]))
                     for i in range(len(flipAverages[key])):
@@ -359,7 +368,7 @@ class GraphPage(tk.Frame):
                     a.plot(avgs,label = key)
                 
                     #min max stuff
-                    self.get_minmax(avgs)
+                    self.get_minmax(key.replace(".bin","_") + "total", avgs)
 
 
 #        a.legend(loc='upper left', prop={'size':6}, bbox_to_anchor=(1,1))
@@ -367,7 +376,7 @@ class GraphPage(tk.Frame):
         a.legend(fontsize = 6,loc='best')
                 
         
-    def get_minmax(self, array):
+    def get_minmax(self, key, array):
         t2 = self.getT2Entry()
         t3 = self.getT3Entry()
         
@@ -382,9 +391,12 @@ class GraphPage(tk.Frame):
         self.maxVar.set(str(max_x + min_x + t2) + " , " + str(max_y))
         self.ampVar.set(str(max_y-min_y))
         
+        amplitudes[key] = {"amplitude":max_y-min_y,"min_x":min_x + t2, "min_y":min_y, "max_x":max_x + min_x + t2, "max_y":max_y}
+        
     #selects an graphs sessions associated with the slected file name     
     def on_file_select(self, evt):
         a.clear()
+        amplitudes.clear()
         selection = self.processedList.curselection()
         selection = [self.processedList.get(item) for item in selection]
         self.selectedBlocks.selection_set(0,tk.END)
@@ -424,6 +436,7 @@ class GraphPage(tk.Frame):
     #function to graph selected items only
     def graph_selected(self):
         a.clear()
+        amplitudes.clear()
         self.graphBehavior = 'selected'
         selection = self.selectedBlocks.curselection()
         for item in selection:
@@ -431,28 +444,29 @@ class GraphPage(tk.Frame):
             if self.offsetVar.get() == 1:
                 if self.stimTypeVar.get() == 1:
                     a.plot(flipAverages[key][int(block) - 1]-np.average(flipAverages[key][int(block) - 1]))
-                    self.get_minmax(flipAverages[key][int(block) - 1]-np.average(flipAverages[key][int(block) - 1]))
+                    self.get_minmax(key.replace(".bin","_") + block, flipAverages[key][int(block) - 1]-np.average(flipAverages[key][int(block) - 1]))
                 elif self.stimTypeVar.get() == 2:
                     a.plot(flopAverages[key][int(block) - 1]-np.average(flopAverages[key][int(block) - 1]))
-                    self.get_minmax(flopAverages[key][int(block) - 1]-np.average(flopAverages[key][int(block) - 1]))
+                    self.get_minmax(key.replace(".bin","_") + block, flopAverages[key][int(block) - 1]-np.average(flopAverages[key][int(block) - 1]))
                 elif self.stimTypeVar.get() == 3:
                     avg = np.mean(np.array([flipAverages[key][int(block) - 1],flopAverages[key][int(block) - 1]]), axis = 0)
                     a.plot(avg-np.average(avg))
-                    self.get_minmax(avg-np.average(avg))
+                    self.get_minmax(key.replace(".bin","_") + block, avg-np.average(avg))
             elif self.offsetVar.get() == 0:
                 if self.stimTypeVar.get() == 1:
                     a.plot(flipAverages[key][int(block) - 1])
-                    self.get_minmax(flipAverages[key][int(block) - 1])
+                    self.get_minmax(key.replace(".bin","_") + block, flipAverages[key][int(block) - 1])
                 elif self.stimTypeVar.get() == 2:
                     a.plot(flopAverages[key][int(block) - 1])
-                    self.get_minmax(flopAverages[key][int(block) - 1])
+                    self.get_minmax(key.replace(".bin","_") + block, flopAverages[key][int(block) - 1])
                 elif self.stimTypeVar.get() == 3:
                     avg = np.mean(np.array([flipAverages[key][int(block) - 1],flopAverages[key][int(block) - 1]]), axis = 0)
                     a.plot(avg)
-                    self.get_minmax(avg)
+                    self.get_minmax(key.replace(".bin","_") + block, avg)
 
     def graph_on_select(self, evt):
         a.clear()
+        amplitudes.clear()
         self.graphBehavior = 'selected'
         selection = self.selectedBlocks.curselection()
         for item in selection:
@@ -460,25 +474,35 @@ class GraphPage(tk.Frame):
             if self.offsetVar.get() == 1:
                 if self.stimTypeVar.get() == 1:
                     a.plot(flipAverages[key][int(block) - 1]-np.average(flipAverages[key][int(block) - 1]))
-                    self.get_minmax(flipAverages[key][int(block) - 1]-np.average(flipAverages[key][int(block) - 1]))
+                    self.get_minmax(key.replace(".bin","_") + block, flipAverages[key][int(block) - 1]-np.average(flipAverages[key][int(block) - 1]))
                 elif self.stimTypeVar.get() == 2:
                     a.plot(flopAverages[key][int(block) - 1]-np.average(flopAverages[key][int(block) - 1]))
-                    self.get_minmax(flopAverages[key][int(block) - 1]-np.average(flopAverages[key][int(block) - 1]))
+                    self.get_minmax(key.replace(".bin","_") + block, flopAverages[key][int(block) - 1]-np.average(flopAverages[key][int(block) - 1]))
                 elif self.stimTypeVar.get() == 3:
                     avg = np.mean(np.array([flipAverages[key][int(block) - 1],flopAverages[key][int(block) - 1]]), axis = 0)
                     a.plot(avg-np.average(avg))
-                    self.get_minmax(avg-np.average(avg))
+                    self.get_minmax(key.replace(".bin","_") + block, avg-np.average(avg))
             elif self.offsetVar.get() == 0:
                 if self.stimTypeVar.get() == 1:
                     a.plot(flipAverages[key][int(block) - 1])
-                    self.get_minmax(flipAverages[key][int(block) - 1])
+                    self.get_minmax(key.replace(".bin","_") + block, flipAverages[key][int(block) - 1])
                 elif self.stimTypeVar.get() == 2:
                     a.plot(flopAverages[key][int(block) - 1])
-                    self.get_minmax(flopAverages[key][int(block) - 1])
+                    self.get_minmax(key.replace(".bin","_") + block, flopAverages[key][int(block) - 1])
                 elif self.stimTypeVar.get() == 3:
                     avg = np.mean(np.array([flipAverages[key][int(block) - 1],flopAverages[key][int(block) - 1]]), axis = 0)
                     a.plot(avg)
-                    self.get_minmax(avg)
+                    self.get_minmax(key.replace(".bin","_") + block, avg)
+        
+    def save(self):
+        self.graph_all()
+        savedamps = amplitudes.copy()
+        self.graph_total()
+        savedamps.update(amplitudes)
+        save = ds.DictionarySaver()
+        #print savedamps
+        save.saveDictionary(savedamps, data.keys()[0][:-4])
+        #matlab.savemat(data.keys()[0], amplitudes)
         
     def on_stim_select(self):
         if self.graphBehavior == 'all':
@@ -494,6 +518,7 @@ class GraphPage(tk.Frame):
     
     #brings names in controller into listbox
     def process(self):
+        amplitudes.clear()
         for key in data.keys():
             print "processing " + key + "..."
             entry = data[key]
@@ -514,8 +539,6 @@ class GraphPage(tk.Frame):
 
         self.graph_all()
         
-        #save = ds.DictionarySaver()
-        #save.saveDictionary(flipAverages,'C:/Users/Jesse/Documents/doot')
         
             
     def getStimLengthEntry(self):
