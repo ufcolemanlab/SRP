@@ -244,7 +244,7 @@ class GraphPage(tk.Frame):
         
         self.t3Entry = ttk.Entry(f1, text = "Time 3")
         self.t3Entry.grid(row = 2, column = 7)
-        self.t3Entry.insert(0, 100)
+        self.t3Entry.insert(0, 250)
         
         minLabel = tk.Label(f1, text = "Min: ")
         minLabel.grid(row = 4, column = 0)
@@ -550,6 +550,7 @@ class GraphPage(tk.Frame):
         
 
         self.graph_all()
+        self.graph_total()
         
         
             
