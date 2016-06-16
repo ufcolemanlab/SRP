@@ -509,7 +509,20 @@ class GraphPage(tk.Frame):
             c = amplitudes[key].copy()
             c.update(savedamps[key])
             savedamps[key] = c
+            
+        ampavg = 0.0
+        for key in savedamps:
+            for session in savedamps[key]:
+                if session != "total":
+                    ampavg += savedamps[key][session]["amplitude"]
+            ampavg /= (len(savedamps[key])-1)
+            savedamps[key]["total"]["amplitudeAverage"] = ampavg
+            ampavg = 0.0
         
+        for key in savedamps:
+            for session in savedamps[key]:
+                print "s "  + session + "a " + str(savedamps[key][session]["amplitude"])
+            print savedamps[key]["total"]["amplitudeAverage"]
         save = ds.DictionarySaver()
         #print savedamps
 
