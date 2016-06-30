@@ -56,7 +56,7 @@ class ChannelPlot:
 
 if __name__ == "__main__":
     dataImport = ChannelPlot()
-    dataImport.setFilename('C:/Users/Jesse/Downloads/test_5_flip_flop_30trials_data.bin')
+    dataImport.setFilename('C:/Users/Jesse/Documents/Python Scripts/test/M_SRP11_45d_135d_d6_awake_132_data.bin')
     dataImport.setDataType('<d')
     dataImport.openAndPlot()
 

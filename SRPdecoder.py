@@ -113,13 +113,19 @@ if __name__ == "__main__":
     avgLength = SRP.AvgStimLength([flipTimeStamps, flopTimeStamps])
     stimsPerSession = SRP.StimsPerSession(flipLengths, flopLengths, avgLength)
     flips, flops = SRP.GetStimLists(signalChannel, stimsPerSession, avgLength, flipTimeStamps, flopTimeStamps)
+    print flips
     flipavgs = SRP.GetAverages(flips, stimsPerSession)
     flopavgs = SRP.GetAverages(flops, stimsPerSession)
     
     plt.figure(2)
-    for i in range(len(flipavgs)):
-        plt.plot(flipavgs[i])
+#    for i in range(len(flipavgs)):
+#        plt.plot(flipavgs[i])
+    plt.plot(flopavgs[0])
+    
+    plt.figure(3)
+    
+    plt.plot(flipavgs[0])
         
     plt.figure(3)
-    for i in range(len(flipavgs)):
-        plt.plot(flopavgs[i])
+#    for i in range(len(flipavgs)):
+#        plt.plot(flopavgs[i])
