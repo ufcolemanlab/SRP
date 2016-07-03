@@ -17,7 +17,7 @@ import DictionarySaver as ds
 import DataHandler as dh
 
 import matplotlib
-matplotlib.use("TkAgg")
+matplotlib.use("TkAgg", warn=False)
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
@@ -61,7 +61,7 @@ class Application(tk.Tk):
         
         tk.Tk.__init__(self, *args, **kwargs)
         
-        tk.Tk.iconbitmap(self, default = "mouse.ico")
+        #tk.Tk.iconbitmap(self, default = "mouse.ico")
         tk.Tk.wm_title(self, "SRP Analysis")
         
         container = tk.Frame(self)
